@@ -3,4 +3,4 @@ Exercise on sensors, data storage and visualization for Mobile and Wearable Comp
 
 # The assignment
 
-The pdf containing the assingment can be found on docs/2024_10_25_MWC_Assignment03.pdf
+The pdf containing the assingment can be found on mwc-assigment-3/2024_10_25_MWC_Assignment03.pdf
