@@ -21,9 +21,12 @@ import com.anychart.enums.Position;
 import com.anychart.enums.TooltipPositionMode;
 import com.example.stepappv4.R;
 import com.example.stepappv4.StepAppOpenHelper;
+import com.example.stepappv4.databinding.FragmentDayBinding;
 import com.example.stepappv4.databinding.FragmentReportBinding;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -38,22 +41,23 @@ public class DayFragment extends Fragment {
 
     Date cDate = new Date();
     String current_time = new SimpleDateFormat("yyyy-MM-dd").format(cDate);
+    String pastWeekDate = LocalDate.now().minusDays(6).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 
-    public Map<Integer, Integer> stepsByHour = null;
+    public Map<String, Integer> stepsByDay = null;
 
-    private FragmentReportBinding binding;
+    private FragmentDayBinding binding;
 
     private StepAppOpenHelper openHelper;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
 
-        binding = FragmentReportBinding.inflate(inflater, container, false);
+        binding = FragmentDayBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
         // Create column chart
-        anyChartView = root.findViewById(R.id.hourBarChart);
-        anyChartView.setProgressBar(root.findViewById(R.id.loadingBar));
+        anyChartView = root.findViewById(R.id.dayBarChart);
+        anyChartView.setProgressBar(root.findViewById(R.id.loadingBar2));
 
         Cartesian cartesian = createColumnChart();
         anyChartView.setBackgroundColor("#00000000");
@@ -73,16 +77,21 @@ public class DayFragment extends Fragment {
         //***** Read data from SQLiteDatabase *********/
         // TODO 1 (YOUR TURN): Get the map with hours and number of steps for today
         //  from the database and assign it to variable stepsByHour
-        stepsByHour = openHelper.loadStepsByHour(getContext(), current_time);
+        stepsByDay = StepAppOpenHelper.loadStepsByDay(getContext(), pastWeekDate, current_time);
 
         // TODO 2 (YOUR TURN): Creating a new map that contains hours of the day from 0 to 23 and
         //  number of steps during each hour set to 0
-        Map<Integer, Integer> graph_map = new TreeMap<>();
-        for (int i=0; i<24;i++) graph_map.put(i, 0);
+        LocalDate currentDate = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        Map<String, Integer> graph_map = new TreeMap<>();
+        for (int i=0; i<7; i++) {
+            LocalDate date = currentDate.minusDays(i);
+            graph_map.put(date.format(formatter), 0);
+        }
 
         // TODO 3 (YOUR TURN): Replace the number of steps for each hour in graph_map
         //  with the number of steps read from the database
-        graph_map.putAll(stepsByHour);
+        graph_map.putAll(stepsByDay);
 
 
         //***** Create column chart using AnyChart library *********/
@@ -92,7 +101,7 @@ public class DayFragment extends Fragment {
         // TODO 5: Create data entries for x and y axis of the graph
         List<DataEntry> data = new ArrayList<>();
 
-        for (Map.Entry<Integer,Integer> entry : graph_map.entrySet())
+        for (Map.Entry<String,Integer> entry : graph_map.entrySet())
             data.add(new ValueDataEntry(entry.getKey(), entry.getValue()));
 
         // TODO 6: Add the data to column chart and get the columns
@@ -107,7 +116,7 @@ public class DayFragment extends Fragment {
 
         // TODO 8: Modifying properties of tooltip
         column.tooltip()
-                .titleFormat("At hour: {%X}")
+                .titleFormat("At day: {%X}")
                 .format("{%Value} Steps")
                 .anchor(Anchor.RIGHT_BOTTOM);
 
@@ -126,7 +135,7 @@ public class DayFragment extends Fragment {
 
         // TODO 10 (YOUR TURN): Modify the UI of the cartesian
         cartesian.yAxis(0).title("Number of steps");
-        cartesian.xAxis(0).title("Hour");
+        cartesian.xAxis(0).title("Day");
         cartesian.background().fill("#00000000");
         cartesian.animation(true);
 
